@@ -3,7 +3,6 @@ const app = require('../service');
 const { createAdminUser, createDinerUser } = require('../../tests/user.js');
 const { randomName } = require('../../tests/randomName.js');
 const { clearDatabase } = require('../../tests/database.js');
-const { get } = require('./orderRouter.js');
 
 let adminUser;
 let dinerUser;
