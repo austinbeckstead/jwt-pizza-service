@@ -63,9 +63,18 @@ describe('User Router', () => {
     expect(res.body.message).toBe('not implemented');
   });
 
-  test('list users unauthorized', async () => {
+  test('list users unauthorized (no auth token)', async () => {
     const listUsersRes = await request(app).get('/api/user');
     expect(listUsersRes.status).toBe(401);
+  });
+
+  test('list users unauthorized (not admin)', async () => {
+    dinerUser = await createDinerUser();
+    dinerAuthToken = await loginUser(request(app), dinerUser);
+    const listUsersRes = await request(app)
+      .get('/api/user')
+      .set('Authorization', `Bearer ${dinerAuthToken}`);
+    expect(listUsersRes.status).toBe(403);
   });
 
   test('list users', async () => {
