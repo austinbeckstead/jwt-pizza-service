@@ -21,6 +21,13 @@ authRouter.docs = [
     example: `curl -X PUT localhost:3000/api/auth -d '{"email":"a@jwt.com", "password":"admin"}' -H 'Content-Type: application/json'`,
     response: { user: { id: 1, name: '常用名字', email: 'a@jwt.com', roles: [{ role: 'admin' }] }, token: 'tttttt' },
   },
+    {
+    method: 'POST',
+    path: '/api/auth/admin',
+    description: 'Register an admin user (for testing)',
+    example: `curl -X POST localhost:3000/api/auth/admin -d '{"name":"admin", "email":"a@jwt.com", "password":"admin"}' -H 'Content-Type: application/json'`,
+    response: { user: { id: 2, name: 'admin', email: 'a@jwt.com', roles: [{ role: 'admin' }] }, token: 'tttttt' },
+  },
   {
     method: 'DELETE',
     path: '/api/auth',
@@ -64,6 +71,20 @@ authRouter.post(
       return res.status(400).json({ message: 'name, email, and password are required' });
     }
     const user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
+    const auth = await setAuth(user);
+    res.json({ user: user, token: auth });
+  })
+);
+
+// register admin (for testing)
+authRouter.post(
+  '/admin',
+  asyncHandler(async (req, res) => {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'name, email, and password are required' });
+    }
+    const user = await DB.addUser({ name, email, password, roles: [{ role: Role.Admin }] });
     const auth = await setAuth(user);
     res.json({ user: user, token: auth });
   })
