@@ -20,4 +20,22 @@ async function createDinerUser() {
 
 }
 
-module.exports = { createAdminUser, createDinerUser };
+async function registerUser(service) {
+  const testUser = {
+    name: 'pizza diner',
+    email: `${randomName()}@test.com`,
+    password: 'a',
+  };
+  const registerRes = await service.post('/api/auth').send(testUser);
+  registerRes.body.user.password = testUser.password;
+
+  return [registerRes.body.user, registerRes.body.token];
+}
+
+async function loginUser(service, user) {
+  const loginRes = await service.put('/api/auth').send(user);
+  return loginRes.body.token;
+}
+
+
+module.exports = { createAdminUser, createDinerUser, registerUser, loginUser };

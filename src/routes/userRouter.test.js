@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
-const { createAdminUser, createDinerUser } = require('../../tests/user.js');
+const { createAdminUser, createDinerUser, registerUser, loginUser } = require('../../tests/user.js');
 const { randomName } = require('../../tests/randomName.js');
 const { clearDatabase } = require('../../tests/database.js');
 
@@ -63,13 +63,28 @@ describe('User Router', () => {
     expect(res.body.message).toBe('not implemented');
   });
 
-  test('list users (not implemented)', async () => {
-    const res = await request(app)
+  test('list users unauthorized', async () => {
+    const listUsersRes = await request(app).get('/api/user');
+    expect(listUsersRes.status).toBe(401);
+  });
+
+  test('list users', async () => {
+    const admin = await createAdminUser();
+    const diner = await createDinerUser();
+    const userToken = await loginUser(request(app), admin);
+    const listUsersRes = await request(app)
       .get('/api/user')
-      .set('Authorization', `Bearer ${adminAuthToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe('not implemented');
-    expect(res.body.users).toEqual([]);
-    expect(res.body.more).toBe(false);
+      .set('Authorization', 'Bearer ' + userToken);
+    expect(listUsersRes.status).toBe(200);
+    expect(listUsersRes.body.users).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: diner.id,
+        }),
+        expect.objectContaining({
+          id: admin.id,
+        }),
+      ])
+    );
   });
 });
