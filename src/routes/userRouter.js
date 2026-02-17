@@ -75,7 +75,7 @@ userRouter.delete(
   asyncHandler(async (req, res) => {
     const userId = Number(req.params.userId);
     const user = req.user;
-    if (!req.user.isRole(Role.Admin)) {
+    if (!user.isRole(Role.Admin)) {
       return res.status(403).json({ message: 'unauthorized' });
     }
     await DB.deleteUser(userId);

@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
-const { createAdminUser, createDinerUser, registerUser, loginUser } = require('../../tests/user.js');
+const { createAdminUser, createDinerUser} = require('../../tests/user.js');
 const { randomName } = require('../../tests/randomName.js');
 const { clearDatabase } = require('../../tests/database.js');
 
