@@ -55,13 +55,6 @@ describe('User Router', () => {
     expect(res.status).toBe(403);
   });
 
-  test('delete user (not implemented)', async () => {
-    const res = await request(app)
-      .delete(`/api/user/${adminUser.id}`)
-      .set('Authorization', `Bearer ${adminAuthToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe('not implemented');
-  });
 
   test('list users unauthorized (no auth token)', async () => {
     const listUsersRes = await request(app).get('/api/user');
@@ -69,8 +62,6 @@ describe('User Router', () => {
   });
 
   test('list users unauthorized (not admin)', async () => {
-    dinerUser = await createDinerUser();
-    dinerAuthToken = await loginUser(request(app), dinerUser);
     const listUsersRes = await request(app)
       .get('/api/user')
       .set('Authorization', `Bearer ${dinerAuthToken}`);
@@ -78,20 +69,45 @@ describe('User Router', () => {
   });
 
   test('list users', async () => {
-    const admin = await createAdminUser();
-    const diner = await createDinerUser();
-    const userToken = await loginUser(request(app), admin);
     const listUsersRes = await request(app)
       .get('/api/user')
-      .set('Authorization', 'Bearer ' + userToken);
+      .set('Authorization', `Bearer ${adminAuthToken}`);
     expect(listUsersRes.status).toBe(200);
     expect(listUsersRes.body.users).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: diner.id,
+          id: dinerUser.id,
         }),
         expect.objectContaining({
-          id: admin.id,
+          id: adminUser.id,
+        }),
+      ])
+    );
+  });
+
+  test('delete user not admin', async () => {
+    const deleteRes = await request(app)
+      .delete(`/api/user/${dinerUser.id}`)
+      .set('Authorization', `Bearer ${dinerAuthToken}`);
+    expect(deleteRes.status).toBe(403);
+    expect(deleteRes.body.message).toBe('unauthorized');
+  });
+
+  test('delete user', async () => {
+    const deleteRes = await request(app)
+      .delete(`/api/user/${dinerUser.id}`)
+      .set('Authorization', `Bearer ${adminAuthToken}`);
+    expect(deleteRes.status).toBe(200);
+    expect(deleteRes.body.message).toBe('user deleted');
+
+    const listUsersRes = await request(app)
+      .get('/api/user')
+      .set('Authorization', `Bearer ${adminAuthToken}`);
+    expect(listUsersRes.status).toBe(200);
+    expect(listUsersRes.body.users).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: dinerUser.id,
         }),
       ])
     );
