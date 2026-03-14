@@ -128,9 +128,9 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: 'jwt-pizza-service'
         run: |
-          docker build --platform=linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
+          docker build --platform=linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.version }} -t $ECR_REGISTRY/$ECR_REPOSITORY:latest --push .
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >>  $GITHUB_OUTPUT
 
       - name: Deploy new container
         run: |
-          aws ecs update-service --cluster jwt-pizza-service --service jwt-pizza-service --force-new-deployment
+          aws ecs update-service --cluster jwt-pizza-service --service jwt-pizza-service --force-new-deployment               --cli-input-json "$(aws ecs describe-services --cluster jwt-pizza-service --services jwt-pizza-service --region us-east-1 | jq --arg IMAGE \"$ECR_REGISTRY/$ECR_REPOSITORY:${{ env.version }}\" '.services[0].taskDefinition' | xargs -I {} aws ecs describe-task-definition --task-definition {} --region us-east-1 | jq --arg IMAGE \"$ECR_REGISTRY/$ECR_REPOSITORY:${{ env.version }}\" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | {taskDefinition: .taskDefinitionArn, containerDefinitions: [.containerDefinitions[0]]}' | jq -c '.')"
