@@ -3,6 +3,15 @@ const config = require('./config');
 
 let requestMethodCounts = {};
 let userLastSeen = {};
+let authenticationSuccesses = 0;
+let authenticationFailures = 0;
+let pizzasSold = 0;
+let pizzaFailures = 0;
+let revenue = 0.0;
+let latencyCount = 0;
+let totalLatency = 0;
+let pizzaLatencyCount = 0;
+let totalPizzaLatency = 0;
 
 
 function requestCountTracker(req, res, next) {
@@ -24,6 +33,39 @@ function removeUserLastSeen(id) {
     }
 }
 
+function authenticationAttemptTracker(success) {
+    if (success) {
+        authenticationSuccesses += 1;
+    } else {
+        authenticationFailures += 1;
+    }
+}
+
+function pizzaOrderTracker(success, amount) {
+    if (success) {
+        pizzasSold += 1;
+        revenue += amount;
+    } else {
+        pizzaFailures += 1;
+    }
+}
+
+function pizzaLatencyTracker(duration) {
+    pizzaLatencyCount += 1;
+    totalPizzaLatency += duration;
+}
+
+function latencyTracker(req, res, next) {
+  const start = process.hrtime.bigint();
+  res.on('finish', () => {
+    const end = process.hrtime.bigint();
+    const duration = Number(end - start) / 1_000_000;
+    latencyCount += 1;
+    totalLatency += duration;
+  });
+  next();
+}
+ 
 function buildRequestCountMetrics() {
   const metrics = [];
 
@@ -53,6 +95,53 @@ function buildActiveUserMetrics() {
   return metrics;
 }
 
+function buildAuthenticationAttemptMetrics() {
+    const metrics = [];
+    metrics.push(createMetric('authentication_successes', authenticationSuccesses, '1', 'sum', 'asInt', {}));
+    metrics.push(createMetric('authentication_failures', authenticationFailures, '1', 'sum', 'asInt', {}));
+    authenticationSuccesses = 0;
+    authenticationFailures = 0;
+    return metrics;
+}
+
+function buildCpuAndMemoryMetrics() {
+  const metrics = [];
+  const cpuUsage = getCpuUsagePercentage();
+  const memoryUsage = getMemoryUsagePercentage();
+  metrics.push(createMetric('cpu_usage_percentage', cpuUsage, 'percent', 'gauge', 'asDouble', {}));
+  metrics.push(createMetric('memory_usage_percentage', memoryUsage, 'percent', 'gauge', 'asDouble', {}));
+  return metrics;
+}
+
+function buildPizzaOrderMetrics() {
+    const metrics = [];
+    metrics.push(createMetric('pizzas_sold', pizzasSold, '1', 'sum', 'asInt', {}));
+    metrics.push(createMetric('pizza_failures', pizzaFailures, '1', 'sum', 'asInt', {}));
+    metrics.push(createMetric('revenue', revenue, 'BTC', 'sum', 'asDouble', {}));
+    pizzasSold = 0;
+    pizzaFailures = 0;
+    revenue = 0.0;
+    return metrics;
+}
+
+function buildLatencyMetrics() {
+    const metrics = [];
+    const averageLatency = latencyCount > 0 ? totalLatency / latencyCount : 0;
+    metrics.push(createMetric('average_latency_ms', averageLatency, 'ms', 'gauge', 'asDouble', {}));
+    latencyCount = 0;
+    totalLatency = 0;
+    return metrics;
+}
+
+function buildPizzaLatencyMetrics() {
+    const metrics = [];
+    const averagePizzaLatency = pizzaLatencyCount > 0 ? totalPizzaLatency / pizzaLatencyCount : 0;
+    metrics.push(createMetric('average_pizza_latency_ms', averagePizzaLatency, 'ms', 'gauge', 'asDouble', {}));
+    pizzaLatencyCount = 0;
+    totalPizzaLatency = 0;
+    return metrics;
+}
+
 function sendMetricsPeriodically(period) {
   const timer = setInterval(() => {
     try {
@@ -60,9 +149,18 @@ function sendMetricsPeriodically(period) {
       const metrics = [];
       const requestCountMetrics = buildRequestCountMetrics();
       const activeUserMetrics = buildActiveUserMetrics();
-      console.log('active users', activeUserMetrics);
+      const authenticationAttemptMetrics = buildAuthenticationAttemptMetrics();
+      const cpuAndMemoryMetrics = buildCpuAndMemoryMetrics();
+      const pizzaOrderMetrics = buildPizzaOrderMetrics();
+      const latencyMetrics = buildLatencyMetrics();
+      const pizzaLatencyMetrics = buildPizzaLatencyMetrics();
       metrics.push(...requestCountMetrics);
       metrics.push(...activeUserMetrics);
+      metrics.push(...authenticationAttemptMetrics);
+      metrics.push(...cpuAndMemoryMetrics);
+      metrics.push(...pizzaOrderMetrics);
+      metrics.push(...latencyMetrics);
+      metrics.push(...pizzaLatencyMetrics);
       sendMetricToGrafana(metrics);
     } catch (error) {
       console.log('Error sending metrics', error);
@@ -143,4 +241,4 @@ function getMemoryUsagePercentage() {
   return memoryUsage.toFixed(2);
 }
 
-module.exports = { requestCountTracker, sendMetricsPeriodically, updateLastSeen, removeUserLastSeen };
+module.exports = { requestCountTracker, sendMetricsPeriodically, updateLastSeen, removeUserLastSeen, authenticationAttemptTracker, pizzaOrderTracker, latencyTracker, pizzaLatencyTracker };

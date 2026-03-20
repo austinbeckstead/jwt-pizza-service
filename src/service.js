@@ -19,6 +19,7 @@ app.use((req, res, next) => {
 });
 app.use(metrics.requestCountTracker);
 app.use(metrics.updateLastSeen);
+app.use(metrics.latencyTracker);
 
 const apiRouter = express.Router();
 app.use('/api', apiRouter);
