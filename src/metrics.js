@@ -2,15 +2,27 @@ const os = require('os');
 const config = require('./config');
 
 let requestMethodCounts = {};
+let userLastSeen = {};
 
 
 function requestCountTracker(req, res, next) {
-    console.log(req.method);
   requestMethodCounts[req.method] = (requestMethodCounts[req.method] || 0) + 1;
   requestMethodCounts['ALL'] = (requestMethodCounts['ALL'] || 0) + 1;
   next();
 }
 
+function updateLastSeen(req, res, next) {
+    if (req.user && req.user.id) {
+        userLastSeen[req.user.id] = Date.now();
+    }
+    next();
+}
+
+function removeUserLastSeen(id) {
+    if (id) {
+        delete userLastSeen[id];
+    }
+}
 
 function buildRequestCountMetrics() {
   const metrics = [];
@@ -25,19 +37,32 @@ function buildRequestCountMetrics() {
   return metrics;
 }
 
+function buildActiveUserMetrics() {
+  const metrics = [];
+  const now = Date.now();
+  const activeWindow = 15 * 60 * 1000;
+  let activeUsers = 0;
+  Object.keys(userLastSeen).forEach(userId => {
+    if (now - userLastSeen[userId] < activeWindow) {
+      activeUsers += 1;
+    } else {
+      delete userLastSeen[userId];
+    }
+  });
+  metrics.push(createMetric('active_users', activeUsers, '1', 'gauge', 'asInt', {}));
+  return metrics;
+}
+
 function sendMetricsPeriodically(period) {
   const timer = setInterval(() => {
     try {
       console.log('sending metrics')
       const metrics = [];
       const requestCountMetrics = buildRequestCountMetrics();
+      const activeUserMetrics = buildActiveUserMetrics();
+      console.log('active users', activeUserMetrics);
       metrics.push(...requestCountMetrics);
-    //   metrics.push(...httpMetrics);
-    //   metrics.push(...systemMetrics);
-    //   metrics.push(...userMetrics);
-    //   metrics.push(...purchaseMetrics);
-    //   metrics.push(...authMetrics);
-
+      metrics.push(...activeUserMetrics);
       sendMetricToGrafana(metrics);
     } catch (error) {
       console.log('Error sending metrics', error);
@@ -118,4 +143,4 @@ function getMemoryUsagePercentage() {
   return memoryUsage.toFixed(2);
 }
 
-module.exports = { requestCountTracker, sendMetricsPeriodically };
+module.exports = { requestCountTracker, sendMetricsPeriodically, updateLastSeen, removeUserLastSeen };

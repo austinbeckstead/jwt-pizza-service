@@ -8,7 +8,6 @@ const config = require('./config.js');
 const metrics = require('./metrics.js');
 
 const app = express();
-app.use(metrics.requestCountTracker);
 app.use(express.json());
 app.use(setAuthUser);
 app.use((req, res, next) => {
@@ -18,6 +17,8 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
 });
+app.use(metrics.requestCountTracker);
+app.use(metrics.updateLastSeen);
 
 const apiRouter = express.Router();
 app.use('/api', apiRouter);
