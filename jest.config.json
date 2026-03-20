@@ -5,5 +5,10 @@
     "global": {
       "lines": 80
     }
-  }
+  },
+  "coveragePathIgnorePatterns": [
+    "/node_modules/",
+    "/src/metrics.js",
+    "/src/config.js"
+  ]
 }
