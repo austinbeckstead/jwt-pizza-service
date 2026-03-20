@@ -101,9 +101,9 @@ authRouter.put(
       metrics.authenticationAttemptTracker(true);
       const auth = await setAuth(user);
       res.json({ user: user, token: auth });
-    } catch(_error) {
+    } catch(error) {
       metrics.authenticationAttemptTracker(false);
-      res.status(404).json({ message: 'invalid email or password' });
+      res.status(404).json({ message: error.message });
     }
   })
 );
