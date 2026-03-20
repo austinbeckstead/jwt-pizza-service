@@ -143,7 +143,7 @@ function buildPizzaLatencyMetrics() {
 }
 
 function sendMetricsPeriodically(period) {
-  const timer = setInterval(() => {
+  setInterval(() => {
     try {
       console.log('sending metrics')
       const metrics = [];
