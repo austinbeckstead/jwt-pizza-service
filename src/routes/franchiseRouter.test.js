@@ -186,5 +186,6 @@ test('delete franchise', async () => {
     const franchiseId = createFranchiseRes.body.id;
     const deleteFranchiseRes = await request(app)
         .delete(`/api/franchise/${franchiseId}`)
+        .set('Authorization', `Bearer ${adminAuthToken}`);
     expect (deleteFranchiseRes.status).toBe(200);
 })
