@@ -35,8 +35,16 @@ class Logger {
     this.log('info', 'factory', logData);
   }
 
+  errorLogger = (error) => {
+    const logData = {
+      message: error.message,
+      stack: error.stack,
+    };
+    this.log('error', 'application', logData);
+  }
+
   log(level, type, logData) {
-    const labels = { component: config.source, level: level, type: type };
+    const labels = { component: config.logging.source, level: level, type: type };
     const values = [this.nowString(), this.sanitize(logData)];
     const logEvent = { streams: [{ stream: labels, values: [values] }] };
 
@@ -55,20 +63,28 @@ class Logger {
 
   sanitize(logData) {
     logData = JSON.stringify(logData);
-    return logData.replace(/\\"password\\":\s*\\"[^"]*\\"/g, '\\"password\\": \\"*****\\"');
+    // Mask password, token, apiKey, secret, key, and email fields
+    logData = logData.replace(/\"password\":\s*\"[^\"]*\"/gi, '\"password\": \"*****\"');
+    logData = logData.replace(/\"token\":\s*\"[^\"]*\"/gi, '\"token\": \"*****\"');
+    logData = logData.replace(/\"apiKey\":\s*\"[^\"]*\"/gi, '\"apiKey\": \"*****\"');
+    logData = logData.replace(/\"secret\":\s*\"[^\"]*\"/gi, '\"secret\": \"*****\"');
+    logData = logData.replace(/\"key\":\s*\"[^\"]*\"/gi, '\"key\": \"*****\"');
+    logData = logData.replace(/\"email\":\s*\"[^\"]*\"/gi, '\"email\": \"*****\"');
+    return logData;
   }
 
   sendLogToGrafana(event) {
     const body = JSON.stringify(event);
-    fetch(`${config.endpointUrl}`, {
+    fetch(`${config.logging.endpointUrl}`, {
       method: 'post',
       body: body,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.accountId}:${config.apiKey}`,
+        Authorization: `Bearer ${config.logging.accountId}:${config.logging.apiKey}`,
       },
     }).then((res) => {
       if (!res.ok) console.log('Failed to send log to Grafana');
+      else console.log('Log sent to Grafana');
     });
   }
 }
