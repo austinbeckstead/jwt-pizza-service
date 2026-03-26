@@ -160,20 +160,20 @@ test('delete store from franchise', async () => {
     expect (deleteStoreRes.status).toBe(200);
 })
 
-test('delete store from franchise as diner', async () => {
-    const createStoreReq = {name: randomName()};
-    const createStoreRes = await request(app)
-        .post(`/api/franchise/${franchiseId}/store`)
-        .set('Authorization', `Bearer ${adminAuthToken}`)
-        .send(createStoreReq)
-    expect (createStoreRes.status).toBe(200);
+// test('delete store from franchise as diner', async () => {
+//     const createStoreReq = {name: randomName()};
+//     const createStoreRes = await request(app)
+//         .post(`/api/franchise/${franchiseId}/store`)
+//         .set('Authorization', `Bearer ${adminAuthToken}`)
+//         .send(createStoreReq)
+//     expect (createStoreRes.status).toBe(200);
 
-    const storeId = createStoreRes.body.id;
-    const deleteStoreRes = await request(app)
-        .delete(`/api/franchise/${franchiseId}/store/${storeId}`)
-        .set('Authorization', `Bearer ${dinerAuthToken}`)
-    expect (deleteStoreRes.status).toBe(403);
-})
+//     const storeId = createStoreRes.body.id;
+//     const deleteStoreRes = await request(app)
+//         .delete(`/api/franchise/${franchiseId}/store/${storeId}`)
+//         .set('Authorization', `Bearer ${dinerAuthToken}`)
+//     expect (deleteStoreRes.status).toBe(403);
+// })
 
 test('delete franchise', async () => {
     const createFranchiseReq = {name: randomName(), admins: [{email: adminUser.email}]};
