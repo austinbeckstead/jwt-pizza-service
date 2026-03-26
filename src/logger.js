@@ -28,9 +28,10 @@ class Logger {
     this.log('info', 'sql', logData);
   }
 
-  factoryLogger = (body) => {
+  factoryLogger = (reqBody, resBody) => {
     const logData = {
-      request: body,
+      factoryReq: reqBody,
+      factoryRes: resBody,
     };
     this.log('info', 'factory', logData);
   }
