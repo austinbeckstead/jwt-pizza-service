@@ -62,17 +62,25 @@ class Logger {
     return (Math.floor(Date.now()) * 1000000).toString();
   }
 
-  sanitize(logData) {
-    logData = JSON.stringify(logData);
-    // Mask password, token, apiKey, secret, key, and email fields
-      logData = logData.replace(/"password":\s*"[^"]*"/gi, '"password": "*****"');
-      logData = logData.replace(/"token":\s*"[^"]*"/gi, '"token": "*****"');
-      logData = logData.replace(/"apiKey":\s*"[^"]*"/gi, '"apiKey": "*****"');
-      logData = logData.replace(/"secret":\s*"[^"]*"/gi, '"secret": "*****"');
-      logData = logData.replace(/"key":\s*"[^"]*"/gi, '"key": "*****"');
-      logData = logData.replace(/"email":\s*"[^"]*"/gi, '"email": "*****"');
-    return logData;
+sanitize(logData) {
+  function mask(obj) {
+    if (Array.isArray(obj)) {
+      return obj.map(mask);
+    } else if (obj && typeof obj === 'object') {
+      const masked = {};
+      for (const key in obj) {
+        if (["password","token","apiKey","secret","key","email"].includes(key)) {
+          masked[key] = '*****';
+        } else {
+          masked[key] = mask(obj[key]);
+        }
+      }
+      return masked;
+    }
+    return obj;
   }
+  return JSON.stringify(mask(logData));
+}
 
   sendLogToGrafana(event) {
     const body = JSON.stringify(event);
