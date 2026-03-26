@@ -64,12 +64,12 @@ class Logger {
   sanitize(logData) {
     logData = JSON.stringify(logData);
     // Mask password, token, apiKey, secret, key, and email fields
-    logData = logData.replace(/\"password\":\s*\"[^\"]*\"/gi, '\"password\": \"*****\"');
-    logData = logData.replace(/\"token\":\s*\"[^\"]*\"/gi, '\"token\": \"*****\"');
-    logData = logData.replace(/\"apiKey\":\s*\"[^\"]*\"/gi, '\"apiKey\": \"*****\"');
-    logData = logData.replace(/\"secret\":\s*\"[^\"]*\"/gi, '\"secret\": \"*****\"');
-    logData = logData.replace(/\"key\":\s*\"[^\"]*\"/gi, '\"key\": \"*****\"');
-    logData = logData.replace(/\"email\":\s*\"[^\"]*\"/gi, '\"email\": \"*****\"');
+      logData = logData.replace(/"password":\s*"[^"]*"/gi, '"password": "*****"');
+      logData = logData.replace(/"token":\s*"[^"]*"/gi, '"token": "*****"');
+      logData = logData.replace(/"apiKey":\s*"[^"]*"/gi, '"apiKey": "*****"');
+      logData = logData.replace(/"secret":\s*"[^"]*"/gi, '"secret": "*****"');
+      logData = logData.replace(/"key":\s*"[^"]*"/gi, '"key": "*****"');
+      logData = logData.replace(/"email":\s*"[^"]*"/gi, '"email": "*****"');
     return logData;
   }
 
